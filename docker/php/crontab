@@ -1,0 +1,2 @@
+1 0 * * * php /var/www/html/check_emails.php
+2 0 * * * php /var/www/html/script.php
