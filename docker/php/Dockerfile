@@ -11,9 +11,9 @@ RUN docker-php-ext-install mysqli
 
 CMD ["php", "-S", "0.0.0.0:8000"]
 
-#COPY crontab /etc/cron.d/crontab
-#RUN chmod 0644 /etc/cron.d/crontab
-#RUN crontab /etc/cron.d/crontab
-#RUN touch /var/log/cron.log
+COPY crontab /etc/cron.d/crontab
+RUN chmod 0644 /etc/cron.d/crontab
+RUN crontab /etc/cron.d/crontab
+RUN touch /var/log/cron.log
 EXPOSE 80
 

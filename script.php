@@ -7,7 +7,7 @@ $sql = "FROM users u
         WHERE u.email IS NOT NULL 
             AND u.validts > NOW() 
             AND u.validts < (NOW() + INTERVAL 3 DAY) 
-            AND (u.lastts IS NULL OR u.lastts < (NOW() + INTERVAL 3 DAY)) 
+            AND (u.lastts IS NULL OR u.lastts < (NOW() - INTERVAL 3 DAY)) 
             AND u.confirmed = TRUE 
             AND u.inprogress = FALSE";
 
@@ -35,13 +35,13 @@ if ($count_need_to_send) {
                 mysqli_query($db_connect, "BEGIN;");
                 $data = mysqli_query(
                     $db_connect,
-                    "SELECT u.id, u.username, u.email, e.id AS eid, e.checked, e.valid, e.inprogress $sql AND (e.id IS NULL OR (e.inprogress = FALSE AND (e.checked = FALSE OR e.valid = TRUE))) LIMIT 1 FOR UPDATE;"
+                    "SELECT u.id, u.username, u.email, e.id AS eid, e.checked, e.valid, e.inprogress $sql AND (e.id IS NULL OR (e.inprogress = FALSE AND (e.checked = FALSE OR e.valid = TRUE))) LIMIT 1 FOR UPDATE SKIP LOCKED;"
                 )->fetch_assoc();
 
                 if ($data) {
-                    mysqli_query($db_connect, "UPDATE users SET inprogress = 1 WHERE id = {$data['id']};");
+                    mysqli_query($db_connect, "UPDATE users SET inprogress = TRUE WHERE id = {$data['id']};");
                     if ($data['eid'] && !$data['checked']) {
-                        mysqli_query($db_connect, "UPDATE emails SET inprogress = 1 WHERE id = {$data['eid']};");
+                        mysqli_query($db_connect, "UPDATE emails SET inprogress = TRUE WHERE id = {$data['eid']};");
                     }
                     mysqli_query($db_connect, "COMMIT;");
 
@@ -66,18 +66,17 @@ if ($count_need_to_send) {
                     mysqli_query($db_connect, "BEGIN;");
                     mysqli_query(
                         $db_connect,
-                        "UPDATE users SET lastts=NOW(), inprogress = 0 WHERE id = {$data['id']};"
+                        "UPDATE users SET lastts=NOW(), inprogress = FALSE WHERE id = {$data['id']};"
                     );
                     if ($data['eid'] && !$data['checked']) {
                         mysqli_query(
                             $db_connect,
-                            "UPDATE emails SET checked=1, valid=$valid, inprogress = 0 WHERE id = {$data['eid']};"
+                            "UPDATE emails SET checked=1, valid=$valid, inprogress = FALSE WHERE id = {$data['eid']};"
                         );
                     } elseif (!$data['eid']) {
-                        $checked = rand(0, 1);
                         mysqli_query(
                             $db_connect,
-                            "INSERT INTO emails (email, checked, valid) VALUES ({$data['email']}, 1, $valid);"
+                            "INSERT INTO emails (email, checked, valid) VALUES ({$data['email']}, TRUE, $valid);"
                         );
                     }
                     mysqli_query($db_connect, "COMMIT;");

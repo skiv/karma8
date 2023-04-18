@@ -25,7 +25,7 @@ if ($count_unchecked) {
                 mysqli_query($db_connect, "BEGIN;");
                 $data = mysqli_query(
                     $db_connect,
-                    "SELECT e.id, e.email $sql LIMIT 1 FOR UPDATE;"
+                    "SELECT e.id, e.email $sql LIMIT 1 FOR UPDATE SKIP LOCKED;"
                 )->fetch_assoc();
 
                 if ($data) {
@@ -36,7 +36,7 @@ if ($count_unchecked) {
 
                     mysqli_query($db_connect, "BEGIN;");
                     mysqli_query($db_connect,
-                        "UPDATE emails SET checked=1, valid=$valid, inprogress = 0 WHERE id = {$data['id']};");
+                        "UPDATE emails SET checked = TRUE, valid=$valid, inprogress = FALSE WHERE id = {$data['id']};");
                     mysqli_query($db_connect, "COMMIT;");
 
                     echo "$i - Email #{$data['id']} {$data['email']} was checked. Result: $valid\n";
